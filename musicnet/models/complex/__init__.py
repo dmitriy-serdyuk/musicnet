@@ -1,15 +1,15 @@
-from Complex_Convolution import *
-from Complex_BatchNormalization import *
+from .complex_convolution import Complex_Convolution1D as ComplexConvolution1D
+from .complex_batch_normalization import (
+    Complex_BatchNormalization as ComplexBatchNormalization)
+from .resnet_models import get_imagpart, get_realpart, getpart_output_shape
+
+import keras.backend as K
 from keras.layers import Lambda, add, concatenate, Reshape
 from keras.layers.convolutional import (
     AveragePooling2D, Convolution2D, AveragePooling3D, Convolution1D)
 from keras.layers.core import Dense, Activation, Flatten
 from keras.layers.normalization import BatchNormalization
-from keras.models import Model
-from keras.layers import Input
 from keras.regularizers import l2
-import keras.backend as K
-import numpy as np
 
 
 def complex_residual_block(input_tensor, filter_size, featmaps, stage, block,
@@ -17,9 +17,9 @@ def complex_residual_block(input_tensor, filter_size, featmaps, stage, block,
                            drop_prob=0.2, dimensions=2, bn_axis=None):
     nb_fmaps1, nb_fmaps2 = featmaps
     if dimensions == 2:
-        convolution = Complex_Convolution2D
+        raise ValueError
     else:
-        convolution = Complex_Convolution1D
+        convolution = ComplexConvolution1D
 
     conv_name_base = 'res' + str(stage) + block + '_branch'
     bn_name_base = 'bn' + str(stage) + block + '_branch'
@@ -32,7 +32,7 @@ def complex_residual_block(input_tensor, filter_size, featmaps, stage, block,
     else:
         channel_axis = bn_axis
 
-    out = Complex_BatchNormalization(
+    out = ComplexBatchNormalization(
         epsilon=1e-04, momentum=0.9, axis=channel_axis,
         name=bn_name_base + '_2a'
     )(input_tensor)
@@ -61,7 +61,7 @@ def complex_residual_block(input_tensor, filter_size, featmaps, stage, block,
 
     # out = Real_Imag_Dropout(drop_prob)(out)
 
-    out = Complex_BatchNormalization(
+    out = ComplexBatchNormalization(
         epsilon=1e-04, momentum=0.9, axis=channel_axis,
         name=bn_name_base + '_2b'
     )(out)
