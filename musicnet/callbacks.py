@@ -1,3 +1,6 @@
+import os
+import numpy as np
+from os import path
 from sklearn.metrics import precision_recall_curve, average_precision_score
 
 from keras.callbacks import Callback, ModelCheckpoint, LearningRateScheduler
@@ -7,13 +10,13 @@ class SaveLastModel(Callback):
     def __init__(self, workdir, period=10, name=''):
         self.name = name
         self.workdir = workdir
-        self.chkptsdir = os.path.join(self.workdir, "chkpts")
+        self.chkptsdir = path.join(self.workdir, "chkpts")
 
-        if not os.path.isdir(self.chkptsdir):
+        if not path.isdir(self.chkptsdir):
             os.mkdir(self.chkptsdir)
 
         self.period_of_epochs = period
-        self.link_filename = os.path.join(self.chkptsdir, 
+        self.link_filename = path.join(self.chkptsdir, 
                                           "model_checkpoint.hdf5")
     
     def on_epoch_end(self, epoch, logs={}):
@@ -23,8 +26,8 @@ class SaveLastModel(Callback):
                 self.name, epoch + 1)
             base_yaml_filename = "model{}_checkpoint{:06d}.yaml".format(
                 self.name, epoch + 1)
-            hdf5_filename = os.path.join(self.chkptsdir, base_hdf5_filename)
-            yaml_filename = os.path.join(self.chkptsdir, base_yaml_filename)
+            hdf5_filename = path.join(self.chkptsdir, base_hdf5_filename)
+            yaml_filename = path.join(self.chkptsdir, base_yaml_filename)
             
             # YAML
             yaml_model = self.model.to_yaml()
