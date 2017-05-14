@@ -8,12 +8,12 @@ from keras.regularizers import l2
 from standard_resnet.vision_resnet import residual_block
 
 
-def get_mlp(d=4096, m=84):
+def get_mlp(window_size=4096, output_size=84):
     model = keras.models.Sequential()
-    model.add(keras.layers.Flatten(input_shape=(d, 1)))
+    model.add(keras.layers.Flatten(input_shape=(window_size, 1)))
     model.add(keras.layers.Dense(2048, activation='relu',
                                  kernel_initializer='glorot_normal'))
-    model.add(keras.layers.Dense(m, activation='sigmoid',
+    model.add(keras.layers.Dense(output_size, activation='sigmoid',
                                  kernel_initializer='glorot_normal',
                                  bias_initializer=keras.initializers.Constant(value=0)))
     model.compile(optimizer=keras.optimizers.Adam(lr=1e-3),
@@ -22,10 +22,10 @@ def get_mlp(d=4096, m=84):
     return model
 
 
-def get_convnet(d=4096, m=84):
+def get_convnet(window_size=4096, output_size=84):
     model = keras.models.Sequential()
     model.add(keras.layers.Conv1D(
-        64, 512, strides=4, input_shape=(d, 1),
+        64, 512, strides=4, input_shape=(window_size, 1),
         activation='linear',
         kernel_initializer='glorot_normal'))
     model.add(keras.layers.normalization.BatchNormalization(axis=-1))
@@ -52,7 +52,7 @@ def get_convnet(d=4096, m=84):
     model.add(keras.layers.Flatten())
     model.add(keras.layers.Dense(2048, activation='relu',
                                  kernel_initializer='glorot_normal'))
-    model.add(keras.layers.Dense(m, activation='sigmoid',
+    model.add(keras.layers.Dense(output_size, activation='sigmoid',
                                  bias_initializer=keras.initializers.Constant(value=0)))
     model.compile(optimizer=keras.optimizers.Adam(lr=1e-3),
                   loss='binary_crossentropy',

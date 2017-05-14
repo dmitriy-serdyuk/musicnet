@@ -71,7 +71,7 @@ class Validation(Callback):
         self.x = x
         self.y = y
         self.name = name
-        self.logger
+        self.logger = logger
 
     def on_train_begin(epochs, logs):
         pr = self.model.predict(self.x[:, :, None])
