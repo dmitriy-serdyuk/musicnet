@@ -1,8 +1,12 @@
 import os
 import numpy as np
+import h5py
+
+from time import time
 from os import path
 from sklearn.metrics import precision_recall_curve, average_precision_score
 
+import keras
 from keras.callbacks import Callback, ModelCheckpoint, LearningRateScheduler
 
 
@@ -47,9 +51,8 @@ class SaveLastModel(Callback):
 
 
 class Performance(Callback):
-    def __init__(self, logger, **kwargs):
+    def __init__(self, logger):
         self.logger = logger
-        super(self, Performance).__init__(**kwargs)
 
     def on_epoch_begin(self, epoch, logs={}):
         self.timestamps = []
@@ -76,17 +79,19 @@ class Validation(Callback):
         self.name = name
         self.logger = logger
 
-    def on_train_begin(epochs, logs):
+    def evaluate(self):
         pr = self.model.predict(self.x[:, :, None])
         average_precision  = average_precision_score(
             self.y.flatten(), pr.flatten())
-        self.logger.log(
-            {'epoch': epoch, self.name + "_avg_precision": average_precision})
+        return average_precision
 
-    def on_epoch_end(epoch, logs):
-        pr = self.model.predict(self.x[:, :, None])
-        average_precision = average_precision_score(
-            self.x.flatten(), pr.flatten())
+    def on_train_begin(self, logs):
+        average_precision = self.evaluate()
         self.logger.log(
-            {'epoch': epoch, self.name + "_avg_precision": average_precision})
+            {'epoch': 0, self.name + "_avg_precision": average_precision})
+
+    def on_epoch_end(self, epoch, logs):
+        average_precision = self.evaluate()
+        self.logger.log(
+            {'epoch': epoch + 1, self.name + "_avg_precision": average_precision})
 

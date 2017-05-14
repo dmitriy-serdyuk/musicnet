@@ -12,9 +12,6 @@ from time import time
 
 import keras
 
-from fuel.streams import ServerDataStream
-from data_server import create_data_stream
-
 from musicnet.callbacks import SaveLastModel, Performance, Validation
 from musicnet.dataset import (
     create_test_in_memory, load_in_memory, music_net_iterator)
@@ -137,7 +134,7 @@ def main(model_name, in_memory, complex_conv, model, local_data):
     callbacks = [Validation(Xvalid, Yvalid, 'valid', logger), 
                  Validation(Xtest, Ytest, 'test', logger),
                  SaveLastModel("./models/", 1, name=model), 
-                 Performance(),
+                 Performance(logger),
                  #LearningRateScheduler(schedule)
                  ]
 
