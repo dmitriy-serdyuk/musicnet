@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from __future__ import print_function
-import numpy as np                                       # fast vectors and matrices
+import numpy as np
 import h5py
 import os
 from os import path

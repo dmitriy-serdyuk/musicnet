@@ -113,6 +113,5 @@ def music_net_iterator(train_data, rng, window_size=4096, output_size=84):
             for label in train_data[ind][labels][s]:
                 note = label.data[1]
                 Ymb[j, note_to_class(note)] = 1
-        Xmb = Xmb / 0.028
         yield Xmb[:, :, None], Ymb
 
