@@ -53,8 +53,8 @@ def get_convnet(window_size=4096, output_size=84):
     model.add(keras.layers.Dense(2048, activation='relu',
                                  kernel_initializer='glorot_normal'))
     model.add(keras.layers.Dense(output_size, activation='sigmoid',
-                                 bias_initializer=keras.initializers.Constant(value=0)))
-    model.compile(optimizer=keras.optimizers.Adam(lr=1e-3),
+                                 bias_initializer=keras.initializers.Constant(value=-5)))
+    model.compile(optimizer=keras.optimizers.Adam(lr=1e-4),
                   loss='binary_crossentropy',
                   metrics=['accuracy'])
     return model
