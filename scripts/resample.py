@@ -14,10 +14,11 @@ def resample_musicnet(file_in, file_out, frame_rate, frame_rate_out):
     print('.. sampling with ratio {}'.format(ratio))
 
     resampled_data = {}
-    with open(file_in) as f_in:
+    with open(file_in, 'rb') as f_in:
         data_in = numpy.load(file_in)
-        for key in data_in:
-            print('.. aggregating {}'.format(key))
+        n_files = len(data_in.keys())
+        for i, key in enumerate(data_in):
+            print('.. aggregating {} ({} / {})'.format(key, i, n_files))
             data = data_in[key]
             data[0] = resample(data[0], frame_rate, frame_rate_out)
             resampled_intervals = []
@@ -30,9 +31,9 @@ def resample_musicnet(file_in, file_out, frame_rate, frame_rate_out):
             data[1] = IntervalTree(resampled_intervals)
             resampled_data[key] = data
 
-    print('.. saving output')
-    with open(file_out) as f_out:
-        numpy.savez(f_out, **resampled_data)
+        print('.. saving output')
+        with open(file_out, 'wb') as f_out:
+            numpy.savez(f_out, **resampled_data)
 
 
 if __name__ == "__main__":
