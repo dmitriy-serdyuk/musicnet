@@ -1,17 +1,13 @@
 #!/usr/bin/env python
 from __future__ import print_function
 import numpy as np
-import h5py
-import os
 from os import path
-import sys
 import argparse
 import mimir
 
-from time import time
-
 import keras
 
+import musicnet.models.complex
 from musicnet.callbacks import (
     SaveLastModel, Performance, Validation, LearningRateScheduler)
 from musicnet.dataset import (
@@ -62,7 +58,7 @@ def get_model(model, complex_):
         return models.get_mlp()
     elif model == 'shallow_convnet':
         if complex_:
-            return models.complex_models.get_shallow_convnet()
+            return models.complex.get_shallow_convnet()
         print('.. using convnet')
         return models.get_shallow_convnet()
     elif model == 'deep_convnet':
