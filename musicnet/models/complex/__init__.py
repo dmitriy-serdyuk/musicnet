@@ -10,32 +10,23 @@ from keras.initializers import Constant
 from keras.optimizers import Adam
 from keras.regularizers import l2
 
-from .implementation_4d.Complex_Convolution import (
-    Complex_Convolution1D as ComplexConvolution1D)
-from .implementation_4d.Complex_BatchNormalization import (
-    Complex_BatchNormalization as ComplexBatchNormalization)
-from .implementation_4d.Complex_Dense import Complex_Dense as ComplexDense
-from .implementation_4d.resnet_models import (
-    get_imagpart, get_realpart, getpart_output_shape)
+from complexnn import ComplexConv1D, ComplexBN, ComplexDense
 
 
 def get_shallow_convnet(window_size=4096, output_size=84):
     model = Sequential()
-    model.add(ComplexConvolution1D(
+    model.add(ComplexConv1D(
         64, 512, strides=16, input_shape=(window_size, 1),
-        activation='linear',
-        kernel_initializer='glorot_normal'))
-    model.add(ComplexBatchNormalization(
+        activation='linear'))
+    model.add(ComplexBN(
         axis=-1, momentum=0.9,
         epsilon=1e-4, center=True, scale=True))
     model.add(Activation('relu'))
     model.add(MaxPooling1D(pool_size=4, strides=4))
 
     model.add(Flatten())
-    model.add(ComplexDense(2048, activation='relu',
-              kernel_initializer='glorot_normal'))
-    model.add(ComplexDense(output_size, activation='sigmoid',
-              bias_initializer=Constant(value=-5)))
+    model.add(ComplexDense(2048, activation='relu'))
+    model.add(ComplexDense(output_size, activation='sigmoid'))
     model.compile(optimizer=Adam(lr=1e-4),
                   loss='binary_crossentropy',
                   metrics=['accuracy'])
