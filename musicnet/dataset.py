@@ -100,18 +100,20 @@ def create_test(files, music_file, window_size=DEFAULT_WINDOW_SIZE,
     return Xtest, Ytest
 
 
-def music_net_iterator(train_data, rng, window_size=4096, output_size=84):
-    Xmb = numpy.empty([len(train_data), window_size])
+def music_net_iterator(train_data, rng, window_size=4096, output_size=84,
+                       complex_=False):
+    channels = 2 if complex_ else 1
+    Xmb = numpy.zeros([len(train_data), window_size, channels])
 
     while True:
         Ymb = numpy.zeros([len(train_data), output_size])
         for j, ind in enumerate(train_data):
             s = rng.randint(window_size / 2, 
                             len(train_data[ind][features]) - window_size / 2)
-            Xmb[j] = train_data[ind][features][s - window_size / 2:
-                                               s + window_size / 2]
+            Xmb[j, :, 0] = train_data[ind][features][s - window_size / 2:
+                                                     s + window_size / 2]
             for label in train_data[ind][labels][s]:
                 note = label.data[1]
                 Ymb[j, note_to_class(note)] = 1
-        yield Xmb[:, :, None], Ymb
+        yield Xmb, Ymb
 

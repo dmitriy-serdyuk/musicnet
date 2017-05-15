@@ -134,7 +134,7 @@ def main(model_name, in_memory, complex_, model, local_data, epochs):
 
     rng = np.random.RandomState(123)
     if in_memory: 
-        it = music_net_iterator(train_data, rng)
+        it = music_net_iterator(train_data, rng, complex_)
     else:
         raise ValueError
 
