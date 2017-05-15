@@ -22,6 +22,7 @@ def get_mlp(window_size=4096, output_size=84):
     return model
 
 
+<<<<<<< HEAD
 def get_convnet(window_size=4096, output_size=84):
     model = keras.models.Sequential()
     model.add(keras.layers.Conv1D(
@@ -52,6 +53,59 @@ def get_convnet(window_size=4096, output_size=84):
     model.add(keras.layers.Flatten())
     model.add(keras.layers.Dense(2048, activation='relu',
                                  kernel_initializer='glorot_normal'))
+=======
+def get_shallow_convnet(window_size=4096, output_size=84):
+    model = keras.models.Sequential()
+    model.add(keras.layers.Conv1D(
+        64, 512, strides=16, input_shape=(window_size, 1),
+        activation='relu',
+        kernel_initializer='glorot_normal'))
+    model.add(keras.layers.MaxPooling1D(pool_size=4, strides=2))
+
+    model.add(keras.layers.Flatten())
+    model.add(keras.layers.Dense(2048, activation='relu',
+                                 kernel_initializer='glorot_normal'))
+    model.add(keras.layers.Dense(output_size, activation='sigmoid',
+                                 bias_initializer=keras.initializers.Constant(value=-5)))
+    model.compile(optimizer=keras.optimizers.Adam(lr=1e-4),
+                  loss='binary_crossentropy',
+                  metrics=['accuracy'])
+    return model
+
+
+def get_deep_convnet(window_size=4096, output_size=84):
+    model = keras.models.Sequential()
+    model.add(keras.layers.Conv1D(
+        64, 256, strides=8, input_shape=(window_size, 1),
+        activation='linear',
+        kernel_initializer='glorot_normal'))
+    #model.add(keras.layers.normalization.BatchNormalization(axis=-1))
+    model.add(keras.layers.Activation('relu'))
+    model.add(keras.layers.MaxPooling1D(pool_size=2, strides=1))
+
+    model.add(keras.layers.Conv1D(
+        32, 256, strides=8, activation='relu',
+        kernel_initializer='glorot_normal'))
+    #model.add(keras.layers.Conv1D(
+    #    32, 3,
+    #    activation='relu',
+    #    kernel_initializer='glorot_normal'))
+    #model.add(keras.layers.normalization.BatchNormalization(axis=-1))
+    #model.add(keras.layers.Activation('relu'))
+
+    model.add(keras.layers.MaxPooling1D(pool_size=2))
+    #model.add(keras.layers.Conv1D(
+    #    64, 3, activation='relu',
+    #    kernel_initializer='glorot_normal'))
+    #model.add(keras.layers.normalization.BatchNormalization(axis=-1))
+    #model.add(keras.layers.Activation('relu'))
+
+    #model.add(keras.layers.MaxPooling1D(pool_size=2))
+    model.add(keras.layers.Flatten())
+    model.add(keras.layers.Dense(2048, activation='relu',
+                                 kernel_initializer='glorot_normal'))
+    #model.add(keras.layers.normalization.BatchNormalization(axis=-1))
+>>>>>>> 59b332c78d15155c4296d1ab2867d1ab5e8578a0
     model.add(keras.layers.Dense(output_size, activation='sigmoid',
                                  bias_initializer=keras.initializers.Constant(value=-5)))
     model.compile(optimizer=keras.optimizers.Adam(lr=1e-4),

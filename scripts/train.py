@@ -12,10 +12,18 @@ from time import time
 
 import keras
 
+<<<<<<< HEAD
 from musicnet.callbacks import SaveLastModel, Performance, Validation
 from musicnet.dataset import (
     create_test_in_memory, load_in_memory, music_net_iterator)
 from musicnet.models import get_mlp, get_convnet, get_music_resnet
+=======
+from musicnet.callbacks import (
+    SaveLastModel, Performance, Validation, LearningRateScheduler)
+from musicnet.dataset import (
+    create_test_in_memory, load_in_memory, music_net_iterator)
+from musicnet.models import get_mlp, get_shallow_convnet, get_deep_convnet, get_music_resnet
+>>>>>>> 59b332c78d15155c4296d1ab2867d1ab5e8578a0
 
 
 #d = 2048        # input dimensions
@@ -33,6 +41,7 @@ step = step / 4
 
 def schedule(epoch):
     if epoch >= 0 and epoch < 10:
+<<<<<<< HEAD
         lrate = 0.01
         if epoch == 0:
             print('\ncurrent learning rate value is ' + str(lrate))
@@ -50,20 +59,52 @@ def schedule(epoch):
             print('\ncurrent learning rate value is ' + str(lrate))
     elif epoch >= 150:
         lrate = 0.0001
+=======
+        lrate = 1e-4
+        if epoch == 0:
+            print('\ncurrent learning rate value is ' + str(lrate))
+    elif epoch >= 10 and epoch < 100:
+        lrate = 1e-4
+        if epoch == 10:
+            print('\ncurrent learning rate value is ' + str(lrate))
+    elif epoch >= 100 and epoch < 120:
+        lrate = 5e-5
+        if epoch == 100:
+            print('\ncurrent learning rate value is ' + str(lrate))
+    elif epoch >= 120 and epoch < 150:
+        lrate = 1e-5
+        if epoch == 120:
+            print('\ncurrent learning rate value is ' + str(lrate))
+    elif epoch >= 150:
+        lrate = 1e-6
+>>>>>>> 59b332c78d15155c4296d1ab2867d1ab5e8578a0
         if epoch == 150:
             print('\ncurrent learning rate value is ' + str(lrate))
     return lrate
 
 
+<<<<<<< HEAD
 def main(model_name, in_memory, complex_conv, model, local_data):
+=======
+def main(model_name, in_memory, complex_conv, model, local_data, epochs):
+>>>>>>> 59b332c78d15155c4296d1ab2867d1ab5e8578a0
     print(".. building model")
 
     if model == 'mlp':
         print('.. using MLP')
         model = get_mlp()
+<<<<<<< HEAD
     elif model == 'convnet':
         print('.. using convnet')
         model = get_convnet()
+=======
+    elif model == 'shallow_convnet':
+        print('.. using convnet')
+        model = get_shallow_convnet()
+    elif model == 'deep_convnet':
+        print('.. using convnet')
+        model = get_deep_convnet()
+>>>>>>> 59b332c78d15155c4296d1ab2867d1ab5e8578a0
     else:
         raise ValueError
         if complex_conv:
@@ -135,12 +176,20 @@ def main(model_name, in_memory, complex_conv, model, local_data):
                  Validation(Xtest, Ytest, 'test', logger),
                  SaveLastModel("./models/", 1, name=model), 
                  Performance(logger),
+<<<<<<< HEAD
                  #LearningRateScheduler(schedule)
+=======
+                 LearningRateScheduler(schedule)
+>>>>>>> 59b332c78d15155c4296d1ab2867d1ab5e8578a0
                  ]
 
     print('.. start training')
     model.fit_generator(
+<<<<<<< HEAD
         it, steps_per_epoch=1000, epochs=100,
+=======
+        it, steps_per_epoch=1000, epochs=epochs,
+>>>>>>> 59b332c78d15155c4296d1ab2867d1ab5e8578a0
         callbacks=callbacks, workers=1
         #verbose=2
         #initial_epoch=10
@@ -153,6 +202,10 @@ if __name__ == "__main__":
     parser.add_argument('--in-memory', action='store_true', default=False)
     parser.add_argument('--complex-conv', action='store_true', default=False)
     parser.add_argument('--model', default='resnet')
+<<<<<<< HEAD
+=======
+    parser.add_argument('--epochs', default=200, type=int)
+>>>>>>> 59b332c78d15155c4296d1ab2867d1ab5e8578a0
     parser.add_argument(
         '--local-data', 
         default="/Tmp/serdyuk/data/musicnet_11khz.npz")
