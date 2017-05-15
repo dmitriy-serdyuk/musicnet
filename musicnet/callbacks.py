@@ -4,7 +4,8 @@ import h5py
 
 from time import time
 from os import path
-from sklearn.metrics import precision_recall_curve, average_precision_score
+from sklearn.metrics import (
+    precision_recall_curve, average_precision_score, log_loss)
 
 import keras
 from keras.callbacks import Callback, ModelCheckpoint, LearningRateScheduler
@@ -21,7 +22,7 @@ class SaveLastModel(Callback):
 
         self.period_of_epochs = period
         self.link_filename = path.join(self.chkptsdir, 
-                                          "model_checkpoint.hdf5")
+                                       "model_checkpoint.hdf5")
     
     def on_epoch_end(self, epoch, logs={}):
         if (epoch + 1) % self.period_of_epochs == 0:
@@ -59,8 +60,8 @@ class Performance(Callback):
 
     def on_epoch_end(self, epoch, logs={}):
         t = np.asarray(self.timestamps, dtype=np.float64)
-        train_function_time = float(np.mean(t[ :,1] - t[:  ,0]))
-        load_data_time = float(np.mean(t[1:,0] - t[:-1,1]))
+        train_function_time = float(np.mean(t[ :,1] - t[:,0]))
+        load_data_time = float(np.mean(t[1:,0] - t[:-1, 1]))
         self.logger.log(
             {'epoch': epoch, 'train_function_time': train_function_time})
         self.logger.log({'epoch': epoch, 'load_data_time': load_data_time})
@@ -81,8 +82,9 @@ class Validation(Callback):
 
     def evaluate(self):
         pr = self.model.predict(self.x[:, :, None])
-        average_precision  = average_precision_score(
+        average_precision = average_precision_score(
             self.y.flatten(), pr.flatten())
+        loss = log_loss(self.y.flatten(), pr.flatten())
         return average_precision
 
     def on_train_begin(self, logs):

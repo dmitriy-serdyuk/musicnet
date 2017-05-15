@@ -10,11 +10,13 @@ from keras.initializers import Constant
 from keras.optimizers import Adam
 from keras.regularizers import l2
 
-from .complex_convolution import Complex_Convolution1D as ComplexConvolution1D
-from .complex_batch_normalization import (
+from .implementation_4d.Complex_Convolution import (
+    Complex_Convolution1D as ComplexConvolution1D)
+from .implementation_4d.Complex_BatchNormalization import (
     Complex_BatchNormalization as ComplexBatchNormalization)
-from .complex_dense import Complex_Dense as ComplexDense
-from .resnet_models import get_imagpart, get_realpart, getpart_output_shape
+from .implementation_4d.Complex_Dense import Complex_Dense as ComplexDense
+from .implementation_4d.resnet_models import (
+    get_imagpart, get_realpart, getpart_output_shape)
 
 
 def get_shallow_convnet(window_size=4096, output_size=84):
