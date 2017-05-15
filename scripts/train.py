@@ -138,6 +138,11 @@ def main(model_name, in_memory, complex_, model, local_data, epochs):
     else:
         raise ValueError
 
+    Xvalid = Xvalid[:, :, None]
+    Xtest = Xtest[:, :, None]
+    if complex_:
+        Xvalid = np.concatenate([Xvalid, np.zeros_like(Xvalid)], axis=-1)
+        Xtest = np.concatenate([Xtest, np.zeros_like(Xtest)], axis=-1)
     callbacks = [Validation(Xvalid, Yvalid, 'valid', logger), 
                  Validation(Xtest, Ytest, 'test', logger),
                  SaveLastModel("./models/", 1, name=model), 
@@ -146,6 +151,7 @@ def main(model_name, in_memory, complex_, model, local_data, epochs):
                  ]
 
     print('.. start training')
+    import ipdb; ipdb.set_trace()
     model.fit_generator(
         it, steps_per_epoch=1000, epochs=epochs,
         callbacks=callbacks, workers=1

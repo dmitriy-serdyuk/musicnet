@@ -81,7 +81,7 @@ class Validation(Callback):
         self.logger = logger
 
     def evaluate(self):
-        pr = self.model.predict(self.x[:, :, None])
+        pr = self.model.predict(self.x)
         average_precision = average_precision_score(
             self.y.flatten(), pr.flatten())
         loss = log_loss(self.y.flatten(), pr.flatten())
