@@ -133,8 +133,8 @@ def main(model_name, in_memory, complex_, model, local_data, epochs):
         filename='models/log_{}.jsonl.gz'.format(model_name))
 
     rng = np.random.RandomState(123)
-    if in_memory: 
-        it = music_net_iterator(train_data, rng, complex_)
+    if in_memory:
+        it = music_net_iterator(train_data, rng, complex_=complex_)
     else:
         raise ValueError
 
