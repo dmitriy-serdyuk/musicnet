@@ -59,10 +59,10 @@ def schedule(epoch):
 def get_model(model, complex_):
     if model == 'mlp':
         print('.. using MLP')
-        return get_mlp()
+        return models.get_mlp()
     elif model == 'shallow_convnet':
         if complex_:
-            return models.complex.get_shallow_convnet()
+            return models.complex_models.get_shallow_convnet()
         print('.. using convnet')
         return models.get_shallow_convnet()
     elif model == 'deep_convnet':
