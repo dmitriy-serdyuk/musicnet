@@ -16,7 +16,7 @@ from musicnet.callbacks import (
     SaveLastModel, Performance, Validation, LearningRateScheduler)
 from musicnet.dataset import (
     create_test_in_memory, load_in_memory, music_net_iterator)
-from musicnet.models import get_mlp, get_shallow_convnet, get_deep_convnet, get_music_resnet
+from musicnet import models
 
 
 #d = 2048        # input dimensions
@@ -56,21 +56,21 @@ def schedule(epoch):
     return lrate
 
 
-def main(model_name, in_memory, complex_conv, model, local_data, epochs):
-    print(".. building model")
-
+def get_model(model, complex_):
     if model == 'mlp':
         print('.. using MLP')
-        model = get_mlp()
+        return get_mlp()
     elif model == 'shallow_convnet':
+        if complex_:
+            return models.complex.get_shallow_convnet()
         print('.. using convnet')
-        model = get_shallow_convnet()
+        return models.get_shallow_convnet()
     elif model == 'deep_convnet':
         print('.. using convnet')
-        model = get_deep_convnet()
+        return models.get_deep_convnet()
     else:
         raise ValueError
-        if complex_conv:
+        if complex_:
             pass
         else:
             #model = get_music_resnet()
@@ -88,6 +88,13 @@ def main(model_name, in_memory, complex_conv, model, local_data, epochs):
 
         model.compile(optimizer=sgd, loss='binary_crossentropy', 
                       metrics=['accuracy'])
+        return model
+
+
+def main(model_name, in_memory, complex_, model, local_data, epochs):
+    print(".. building model")
+    model = get_model(model, complex_)
+
     model.summary()
     print(".. parameters: {:03.2f}M".format(model.count_params() / 1000000.))
 
@@ -155,7 +162,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('model_name')
     parser.add_argument('--in-memory', action='store_true', default=False)
-    parser.add_argument('--complex-conv', action='store_true', default=False)
+    parser.add_argument('--complex', dest='complex_', action='store_true', default=False)
     parser.add_argument('--model', default='resnet')
     parser.add_argument('--epochs', default=200, type=int)
     parser.add_argument(

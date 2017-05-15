@@ -1,15 +1,40 @@
 from .complex_convolution import Complex_Convolution1D as ComplexConvolution1D
 from .complex_batch_normalization import (
     Complex_BatchNormalization as ComplexBatchNormalization)
+from .complex_dense import Complex_Dense as ComplexDense
 from .resnet_models import get_imagpart, get_realpart, getpart_output_shape
 
 import keras.backend as K
 from keras.layers import Lambda, add, concatenate, Reshape
 from keras.layers.convolutional import (
-    AveragePooling2D, Convolution2D, AveragePooling3D, Convolution1D)
+    AveragePooling2D, Convolution2D, AveragePooling3D, Convolution1D,
+    MaxPooling1D)
 from keras.layers.core import Dense, Activation, Flatten
 from keras.layers.normalization import BatchNormalization
 from keras.regularizers import l2
+
+
+def get_shallow_convnet(window_size=4096, output_size=84):
+    model = keras.models.Sequential()
+    model.add(ComplexConvolution1D(
+        64, 512, strides=16, input_shape=(window_size, 1),
+        activation='linear',
+        kernel_initializer='glorot_normal'))
+    model.add(ComplexBatchNormalization(
+        axis=-1, momentum=0.9,
+        epsilon=1e-4, center=True, scale=True))
+    model.add(Activation('relu'))
+    model.add(MaxPooling1D(pool_size=4, strides=4))
+
+    model.add(Flatten())
+    model.add(Dense(2048, activation='relu',
+              kernel_initializer='glorot_normal'))
+    model.add(Dense(output_size, activation='sigmoid',
+              bias_initializer=keras.initializers.Constant(value=-5)))
+    model.compile(optimizer=keras.optimizers.Adam(lr=1e-4),
+                  loss='binary_crossentropy',
+                  metrics=['accuracy'])
+    return model
 
 
 def complex_residual_block(input_tensor, filter_size, featmaps, stage, block,
