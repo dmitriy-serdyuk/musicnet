@@ -151,7 +151,6 @@ def main(model_name, in_memory, complex_, model, local_data, epochs):
                  ]
 
     print('.. start training')
-    import ipdb; ipdb.set_trace()
     model.fit_generator(
         it, steps_per_epoch=1000, epochs=epochs,
         callbacks=callbacks, workers=1
