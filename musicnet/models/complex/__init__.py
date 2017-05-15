@@ -14,7 +14,7 @@ from keras.regularizers import l2
 
 def complex_residual_block(input_tensor, filter_size, featmaps, stage, block,
                            shortcut='regular', activation='relu',
-                           drop_prob=0.2, dimensions=2, bn_axis=None):
+                           drop_prob=0.2, dimensions=1, bn_axis=None):
     nb_fmaps1, nb_fmaps2 = featmaps
     if dimensions == 2:
         raise ValueError
