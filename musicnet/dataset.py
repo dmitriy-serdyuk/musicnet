@@ -103,7 +103,7 @@ def create_test(files, music_file, window_size=DEFAULT_WINDOW_SIZE,
 def music_net_iterator(train_data, rng, window_size=4096, output_size=84,
                        complex_=False):
     channels = 2 if complex_ else 1
-    Xmb = numpy.zeros([len(train_data), window_size, channels])
+    Xmb = numpy.zeros([len(train_data), window_size, 2])
 
     while True:
         Ymb = numpy.zeros([len(train_data), output_size])
