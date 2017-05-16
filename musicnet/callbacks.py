@@ -4,7 +4,8 @@ import h5py
 
 from time import time
 from os import path
-from sklearn.metrics import precision_recall_curve, average_precision_score
+from sklearn.metrics import (
+    precision_recall_curve, average_precision_score, log_loss)
 
 import keras
 from keras.callbacks import Callback, ModelCheckpoint, LearningRateScheduler
@@ -21,9 +22,9 @@ class SaveLastModel(Callback):
 
         self.period_of_epochs = period
         self.link_filename = path.join(self.chkptsdir, 
-                                          "model_checkpoint.hdf5")
+                                       "model_checkpoint.hdf5")
     
-    def on_epoch_end(self, epoch, logs={}):
+    def on_epoch_end(self, epoch, logs=None):
         if (epoch + 1) % self.period_of_epochs == 0:
             # Filenames
             base_hdf5_filename = "model{}_checkpoint{:06d}.hdf5".format(
@@ -54,21 +55,21 @@ class Performance(Callback):
     def __init__(self, logger):
         self.logger = logger
 
-    def on_epoch_begin(self, epoch, logs={}):
+    def on_epoch_begin(self, epoch, logs=None):
         self.timestamps = []
 
-    def on_epoch_end(self, epoch, logs={}):
+    def on_epoch_end(self, epoch, logs=None):
         t = np.asarray(self.timestamps, dtype=np.float64)
-        train_function_time = float(np.mean(t[ :,1] - t[:  ,0]))
-        load_data_time = float(np.mean(t[1:,0] - t[:-1,1]))
+        train_function_time = float(np.mean(t[ :,1] - t[:,0]))
+        load_data_time = float(np.mean(t[1:,0] - t[:-1, 1]))
         self.logger.log(
             {'epoch': epoch, 'train_function_time': train_function_time})
         self.logger.log({'epoch': epoch, 'load_data_time': load_data_time})
 
-    def on_batch_begin(self, epoch, logs={}):
+    def on_batch_begin(self, epoch, logs=None):
         self.timestamps += [[time(), time()]]
 
-    def on_batch_end(self, epoch, logs={}):
+    def on_batch_end(self, epoch, logs=None):
         self.timestamps[-1][-1] = time()
 
 
@@ -80,18 +81,22 @@ class Validation(Callback):
         self.logger = logger
 
     def evaluate(self):
-        pr = self.model.predict(self.x[:, :, None])
-        average_precision  = average_precision_score(
+        pr = self.model.predict(self.x)
+        average_precision = average_precision_score(
             self.y.flatten(), pr.flatten())
-        return average_precision
+        loss = log_loss(self.y.flatten(), pr.flatten())
+        return average_precision, loss
 
-    def on_train_begin(self, logs):
-        average_precision = self.evaluate()
+    def on_train_begin(self, logs=None):
+        average_precision, loss = self.evaluate()
         self.logger.log(
-            {'epoch': 0, self.name + "_avg_precision": average_precision})
+            {'epoch': 0, self.name + "_avg_precision": average_precision,
+             self.name + "_loss": loss})
 
-    def on_epoch_end(self, epoch, logs):
-        average_precision = self.evaluate()
+    def on_epoch_end(self, epoch, logs=None):
+        average_precision, loss = self.evaluate()
         self.logger.log(
-            {'epoch': epoch + 1, self.name + "_avg_precision": average_precision})
+            {'epoch': epoch + 1,
+             self.name + "_avg_precision": average_precision,
+             self.name + "_loss": loss})
 
