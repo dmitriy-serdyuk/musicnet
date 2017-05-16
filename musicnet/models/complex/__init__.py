@@ -37,11 +37,7 @@ def get_shallow_convnet(window_size=4096, output_size=84):
 
 def complex_residual_block(input_tensor, filter_size, featmaps, stage, block,
                            shortcut='regular', activation='relu',
-<<<<<<< HEAD
-                           drop_prob=0.2, dimensions=2, bn_axis=None):
-=======
                            drop_prob=0.2, dimensions=1, bn_axis=None):
->>>>>>> 59b332c78d15155c4296d1ab2867d1ab5e8578a0
     nb_fmaps1, nb_fmaps2 = featmaps
     if dimensions == 2:
         raise ValueError
