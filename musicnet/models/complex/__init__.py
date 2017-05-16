@@ -1,13 +1,14 @@
 import keras.backend as K
 from keras.layers import Lambda, add, concatenate, Reshape, Concatenate
 from keras.layers.convolutional import (
-    Convolution2D, Convolution1D, MaxPooling1D)
+    Convolution2D, Convolution1D, MaxPooling1D, AveragePooling1D)
 from keras.layers.core import Dense, Activation, Flatten
 from keras.layers.normalization import BatchNormalization
 from keras.initializers import Constant
 from keras.optimizers import Adam
 from keras.regularizers import l2
 from keras.models import Model, Input
+from keras.layers.core import Permute
 
 from complexnn import (
     ComplexConv1D, ComplexBN, ComplexDense, GetReal, GetImag, GetAbs)
@@ -17,18 +18,15 @@ def get_shallow_convnet(window_size=4096, output_size=84):
     inputs = Input(shape=(window_size, 2))
 
     conv = ComplexConv1D(
-        64, 512, strides=16,
+        32, 512, strides=16,
         activation='relu')(inputs)
-    pool = MaxPooling1D(pool_size=4, strides=2)(conv)
+    pool = AveragePooling1D(pool_size=4, strides=2)(conv)
 
-    real = Flatten()(GetReal(pool))
-    imag = Flatten()(GetImag(pool))
+    pool = Permute([2, 1])(pool)
+    flattened = Flatten()(pool)
 
-    flattened = Concatenate(2)([real, imag])
     dense = ComplexDense(2048, activation='relu')(flattened)
-    complex_logits = ComplexDense(output_size, activation='linear')(dense)
-    logits = GetAbs(complex_logits)
-    predictions = Activation('sigmoid')(logits)
+    predictions = ComplexDense(output_size, activation='sigmoid')(dense)
     model = Model(inputs=inputs, outputs=predictions)
 
     model.compile(optimizer=Adam(lr=1e-4),
