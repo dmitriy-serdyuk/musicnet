@@ -53,6 +53,12 @@ def schedule(epoch):
     return lrate
 
 
+def main(model_name, in_memory, complex_conv, model, local_data, epochs):
+    print(".. building model")
+
+    if model == 'mlp':
+        print('.. using MLP')
+        model = get_mlp()
 def get_model(model, complex_):
     if complex_:
         model_module = models.complex
