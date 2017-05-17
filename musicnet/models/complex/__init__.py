@@ -26,7 +26,41 @@ def get_shallow_convnet(window_size=4096, output_size=84):
     flattened = Flatten()(pool)
 
     dense = ComplexDense(2048, activation='relu')(flattened)
-    predictions = ComplexDense(output_size, activation='sigmoid')(dense)
+    predictions = ComplexDense(
+        output_size, 
+        activation='sigmoid',
+        bias_initializer=Constant(value=-5))(dense)
+    predictions = GetReal(predictions)
+    model = Model(inputs=inputs, outputs=predictions)
+
+    model.compile(optimizer=Adam(lr=1e-4),
+                  loss='binary_crossentropy',
+                  metrics=['accuracy'])
+    return model
+
+
+def get_deep_convnet(window_size=4096, output_size=84):
+    inputs = Input(shape=(window_size, 2))
+
+    conv = ComplexConv1D(
+        32, 512, strides=16,
+        activation='relu')(inputs)
+    pool = AveragePooling1D(pool_size=4, strides=2)(conv)
+
+    conv = ComplexConv1D(
+        32, 5, strides=1,
+        activation='relu')(pool)
+    pool = AveragePooling1D(pool_size=2, strides=1)(conv)
+
+    pool = Permute([2, 1])(pool)
+    flattened = Flatten()(pool)
+
+    dense = ComplexDense(2048, activation='relu')(flattened)
+    predictions = ComplexDense(
+        output_size, 
+        activation='sigmoid',
+        bias_initializer=Constant(value=-5))(dense)
+    predictions = GetReal(predictions)
     model = Model(inputs=inputs, outputs=predictions)
 
     model.compile(optimizer=Adam(lr=1e-4),

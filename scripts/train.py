@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from __future__ import print_function
+import numpy
 import numpy as np
 from os import path
 import argparse
@@ -30,7 +31,7 @@ step = step / 4
 
 def schedule(epoch):
     if epoch >= 0 and epoch < 10:
-        lrate = 1e-4
+        lrate = 1e-3
         if epoch == 0:
             print('\ncurrent learning rate value is ' + str(lrate))
     elif epoch >= 10 and epoch < 100:
@@ -53,17 +54,20 @@ def schedule(epoch):
 
 
 def get_model(model, complex_):
+    if complex_:
+        model_module = models.complex
+        print('.. complex network')
+    else:
+        model_module = models
     if model == 'mlp':
         print('.. using MLP')
         return models.get_mlp()
     elif model == 'shallow_convnet':
-        if complex_:
-            return models.complex.get_shallow_convnet()
-        print('.. using convnet')
-        return models.get_shallow_convnet()
+        print('.. using shallow convnet')
+        return model_module.get_shallow_convnet()
     elif model == 'deep_convnet':
-        print('.. using convnet')
-        return models.get_deep_convnet()
+        print('.. using dwwp convnet')
+        return model_module.get_deep_convnet()
     else:
         raise ValueError
         if complex_:
@@ -87,7 +91,7 @@ def get_model(model, complex_):
         return model
 
 
-def main(model_name, in_memory, complex_, model, local_data, epochs):
+def main(model_name, in_memory, complex_, model, local_data, epochs, fourier):
     print(".. building model")
     model = get_model(model, complex_)
 
@@ -134,15 +138,24 @@ def main(model_name, in_memory, complex_, model, local_data, epochs):
 
     rng = np.random.RandomState(123)
     if in_memory:
-        it = music_net_iterator(train_data, rng, complex_=complex_)
+        it = music_net_iterator(train_data, rng, complex_=complex_, 
+                                fourier=fourier)
     else:
         raise ValueError
 
     Xvalid = Xvalid[:, :, None]
     Xtest = Xtest[:, :, None]
     if complex_:
-        Xvalid = np.concatenate([Xvalid, np.zeros_like(Xvalid)], axis=-1)
-        Xtest = np.concatenate([Xtest, np.zeros_like(Xtest)], axis=-1)
+        if fourier:
+            Xvalid = fft(data)
+            Xtest = fft(data)
+        else:
+            Xvalid = np.concatenate([Xvalid, np.zeros_like(Xvalid)], axis=-1)
+            Xtest = np.concatenate([Xtest, np.zeros_like(Xtest)], axis=-1)
+    else:
+        if fourier:
+            Xvalid = numpy.abs(fft(data))
+            Xtest = numpy.abs(fft(data))
     callbacks = [Validation(Xvalid, Yvalid, 'valid', logger), 
                  Validation(Xtest, Ytest, 'test', logger),
                  SaveLastModel("./models/", 1, name=model), 
@@ -166,6 +179,7 @@ if __name__ == "__main__":
     parser.add_argument('--complex', dest='complex_', action='store_true', default=False)
     parser.add_argument('--model', default='resnet')
     parser.add_argument('--epochs', default=200, type=int)
+    parser.add_argument('--fourier', action='store_true', default=False)
     parser.add_argument(
         '--local-data', 
         default="/Tmp/serdyuk/data/musicnet_11khz.npz")
