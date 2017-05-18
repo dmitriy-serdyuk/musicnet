@@ -91,7 +91,7 @@ def get_model(model, complex_):
 
 
 def main(model_name, in_memory, complex_, model, local_data, epochs, fourier,
-         stft):
+         stft, fast_load):
     rng = numpy.random.RandomState(123)
     print(".. building model")
     model = get_model(model, complex_)
@@ -104,7 +104,7 @@ def main(model_name, in_memory, complex_, model, local_data, epochs, fourier,
     if in_memory:
         print('.. loading train data')
         dataset = MusicNet(local_data, complex_=complex_, fourier=fourier,
-                           stft=stft, rng=rng)
+                           stft=stft, rng=rng, fast_load=fast_load)
         dataset.load()
         print('.. train data loaded')
         Xvalid, Yvalid = dataset.eval_set('valid')
@@ -163,6 +163,7 @@ if __name__ == "__main__":
     parser.add_argument('--epochs', default=200, type=int)
     parser.add_argument('--fourier', action='store_true', default=False)
     parser.add_argument('--stft', action='store_true', default=False)
+    parser.add_argument('--fast-load', action='store_true', default=False)
     parser.add_argument(
         '--local-data', 
         default="/Tmp/serdyuk/data/musicnet_11khz.npz")

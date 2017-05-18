@@ -47,7 +47,8 @@ def create_test(files, music_file, window_size=DEFAULT_WINDOW_SIZE,
 class MusicNet(object):
     def __init__(self, filename, in_memory=True, window_size=4096,
                  output_size=84, feature_size=1024, sample_freq=11000,
-                 complex_=False, fourier=False, stft=False, rng=None, seed=123):
+                 complex_=False, fourier=False, stft=False, fast_load=False,
+                 rng=None, seed=123):
         if not in_memory:
             raise NotImplementedError
         self.filename = filename
@@ -59,6 +60,7 @@ class MusicNet(object):
         self.complex_ = complex_
         self.fourier = fourier
         self.stft = stft
+        self.fast_load = fast_load
 
         if rng is not None:
             self.rng = rng
@@ -72,7 +74,7 @@ class MusicNet(object):
 
         self._eval_sets = {}
 
-    def get_splits(self):
+    def splits(self):
         with open(self.filename, 'rb') as f:
             # This should be fast
             all_inds = numpy.load(f).keys()
@@ -112,8 +114,15 @@ class MusicNet(object):
             return
 
         with open(filename, 'rb') as f:
-            train_data = dict(numpy.load(f))
-            train_inds, valid_inds, test_inds = self.get_splits()
+            train_inds, valid_inds, test_inds = self.splits()
+            data_file = numpy.load(f)
+            if self.fast_load:
+                train_inds = train_inds[:6]
+                train_data = {}
+                for ind in train_inds:
+                    train_data[ind] = data_file[ind]
+            else:
+                train_data = dict(data_file)
 
             # test set
             test_data = {}
@@ -180,10 +189,12 @@ class MusicNet(object):
                 features_out[:, :, 1] = numpy.imag(data[:, :, 0])
             else:
                 data = numpy.abs(fft(features, axis=1))
-                features_out[:, :, 0] = data
+                features_out = data
+        elif self.stft:
+            raise NotImplementedError
         else:
-            features_out[:, :, 0] = features
-        return features, output
+            features_out = features
+        return features_out, output
 
     def train_iterator(self):
         features = numpy.zeros([len(self.train_data), self.window_size])
