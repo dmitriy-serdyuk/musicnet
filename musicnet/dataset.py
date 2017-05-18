@@ -4,6 +4,7 @@ import numpy
 from six.moves import range
 from itertools import chain
 from scipy import fft
+from scipy.signal import stft
 
 
 FS = 44100            # samples/second
@@ -169,8 +170,18 @@ class MusicNet(object):
                     outputs[pos_per_file * i + j, self.note_to_class(note)] = 1
         return features, outputs
 
+    @property
+    def feature_dim(self):
+        dummy_features = numpy.zeros((1, self.window_size, 1))
+        dummy_output = numpy.zeros((1, self.output_size))
+        dummy_features, _ = self.aggregate_raw_batch(
+            dummy_features, dummy_output)
+        return dummy_features.shape[1:]
+
     def aggregate_raw_batch(self, features, output):
         """Aggregate batch.
+
+        All post processing goes here.
 
         Parameters:
         -----------
@@ -192,7 +203,16 @@ class MusicNet(object):
                 data = numpy.abs(fft(features, axis=1))
                 features_out = data
         elif self.stft:
-            raise NotImplementedError
+            _, _, data = stft(features, nperseg=120, noverlap=60, axis=1)
+            length = data.shape[1]
+            n_feats = data.shape[3]
+            if self.complex_:
+                features_out = numpy.zeros(
+                    [len(self.train_data), length, n_feats * 2])
+                features_out[:, :, :n_feats] = numpy.real(data)
+                features_out[:, :, n_feats:] = numpy.imag(data)
+            else:
+                features_out = numpy.abs(features_out[:, :, 0, :])
         else:
             features_out = features
         return features_out, output

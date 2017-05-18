@@ -15,8 +15,8 @@ from complexnn import (
     ComplexConv1D, ComplexBN, ComplexDense, GetReal, GetImag, GetAbs)
 
 
-def get_shallow_convnet(window_size=4096, output_size=84):
-    inputs = Input(shape=(window_size, 2))
+def get_shallow_convnet(window_size=4096, channels=2, output_size=84):
+    inputs = Input(shape=(window_size, channels))
 
     conv = ComplexConv1D(
         32, 512, strides=16,
@@ -40,12 +40,12 @@ def get_shallow_convnet(window_size=4096, output_size=84):
     return model
 
 
-def get_deep_convnet(window_size=4096, output_size=84):
-    inputs = Input(shape=(window_size, 2))
+def get_deep_convnet(window_size=4096, channels=2, output_size=84):
+    inputs = Input(shape=(window_size, channels))
     outs = inputs
 
     outs = (ComplexConv1D(
-        16, 6, strides=2, padding='same', input_shape=(window_size, 2),
+        16, 6, strides=2, padding='same',
         activation='linear',
         kernel_initializer='complex_independent'))(outs)
     outs = (ComplexBN(axis=-1))(outs)

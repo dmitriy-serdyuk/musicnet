@@ -52,7 +52,7 @@ def schedule(epoch):
     return lrate
 
 
-def get_model(model, complex_):
+def get_model(model, complex_, feature_dim):
     if complex_:
         model_module = models.complex
         print('.. complex network')
@@ -60,13 +60,15 @@ def get_model(model, complex_):
         model_module = models
     if model == 'mlp':
         print('.. using MLP')
-        return models.get_mlp()
+        return model_module.get_mlp(window_size=numpy.prod(feature_dim))
     elif model == 'shallow_convnet':
         print('.. using shallow convnet')
-        return model_module.get_shallow_convnet()
+        return model_module.get_shallow_convnet(window_size=feature_dim[0],
+                                                channels=feature_dim[1])
     elif model == 'deep_convnet':
         print('.. using deep convnet')
-        return model_module.get_deep_convnet()
+        return model_module.get_deep_convnet(window_size=feature_dim[0],
+                                             channels=feature_dim[1])
     else:
         raise ValueError
         if complex_:
@@ -93,11 +95,6 @@ def get_model(model, complex_):
 def main(model_name, in_memory, complex_, model, local_data, epochs, fourier,
          stft, fast_load):
     rng = numpy.random.RandomState(123)
-    print(".. building model")
-    model = get_model(model, complex_)
-
-    model.summary()
-    print(".. parameters: {:03.2f}M".format(model.count_params() / 1000000.))
 
     # Warning: the full dataset is over 40GB. Make sure you have enough RAM!
     # This can take a few minutes to load
@@ -111,6 +108,12 @@ def main(model_name, in_memory, complex_, model, local_data, epochs, fourier,
         Xtest, Ytest = dataset.eval_set('test')
     else:
         raise ValueError
+
+    print(".. building model")
+    model = get_model(model, complex_, dataset.feature_dim)
+
+    model.summary()
+    print(".. parameters: {:03.2f}M".format(model.count_params() / 1000000.))
 
     if in_memory:
         pass
