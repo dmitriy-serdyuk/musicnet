@@ -2,6 +2,7 @@ import itertools
 import numpy
 
 from six.moves import range
+from itertools import chain
 from scipy import fft
 
 
@@ -119,7 +120,7 @@ class MusicNet(object):
             if self.fast_load:
                 train_inds = train_inds[:6]
                 train_data = {}
-                for ind in train_inds:
+                for ind in chain(train_inds, valid_inds, test_inds):
                     train_data[ind] = data_file[ind]
             else:
                 train_data = dict(data_file)
