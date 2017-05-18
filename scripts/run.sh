@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+# Dataset: /data/lisatmp3/speech/musicnet/musicnet_11khz.npz
 . $HOME/.bashrc
 pushd ..
 . ./env.sh
