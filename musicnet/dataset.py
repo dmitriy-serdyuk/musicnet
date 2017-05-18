@@ -212,7 +212,7 @@ class MusicNet(object):
                 features_out[:, :, :n_feats] = numpy.real(data)
                 features_out[:, :, n_feats:] = numpy.imag(data)
             else:
-                features_out = numpy.abs(features_out[:, :, 0, :])
+                features_out = numpy.abs(data[:, :, 0, :])
         else:
             features_out = features
         return features_out, output
