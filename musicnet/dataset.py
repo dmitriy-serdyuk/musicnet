@@ -182,7 +182,7 @@ class MusicNet(object):
         """
         channels = 2 if self.complex_ else 1
         features_out = numpy.zeros(
-            [len(self.train_data), self.window_size, channels])
+            [features.shape[0], self.window_size, channels])
         if self.fourier:
             if self.complex_:
                 data = fft(features, axis=1)

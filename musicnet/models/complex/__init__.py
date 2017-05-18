@@ -45,45 +45,45 @@ def get_deep_convnet(window_size=4096, output_size=84):
     outs = inputs
 
     outs = (ComplexConv1D(
-        32, 6, strides=2, padding='same', input_shape=(window_size, 2),
+        16, 6, strides=2, padding='same', input_shape=(window_size, 2),
         activation='linear',
-        kernel_initializer='glorot_normal'))(outs)
+        kernel_initializer='complex_independent'))(outs)
     outs = (ComplexBN(axis=-1))(outs)
     outs = (keras.layers.Activation('relu'))(outs)
     outs = (keras.layers.AveragePooling1D(pool_size=2, strides=2))(outs)
 
     outs = (ComplexConv1D(
-        64, 3, strides=2, padding='same',
+        32, 3, strides=2, padding='same',
         activation='linear',
-        kernel_initializer='glorot_normal'))(outs)
+        kernel_initializer='complex_independent'))(outs)
     outs = (ComplexBN(axis=-1))(outs)
     outs = (keras.layers.Activation('relu'))(outs)
     outs = (keras.layers.AveragePooling1D(pool_size=2, strides=2))(outs)
     
     outs = (ComplexConv1D(
-        128, 3, strides=1, padding='same',
+        64, 3, strides=1, padding='same',
         activation='linear',
-        kernel_initializer='glorot_normal'))(outs)
+        kernel_initializer='complex_independent'))(outs)
+    outs = (ComplexBN(axis=-1))(outs)
+    outs = (keras.layers.Activation('relu'))(outs)
+    outs = (keras.layers.AveragePooling1D(pool_size=2, strides=2))(outs)
+
+    outs = (ComplexConv1D(
+        64, 3, strides=1, padding='same',
+        activation='linear',
+        kernel_initializer='complex_independent'))(outs)
     outs = (ComplexBN(axis=-1))(outs)
     outs = (keras.layers.Activation('relu'))(outs)
     outs = (keras.layers.AveragePooling1D(pool_size=2, strides=2))(outs)
 
     outs = (ComplexConv1D(
         128, 3, strides=1, padding='same',
-        activation='linear',
-        kernel_initializer='glorot_normal'))(outs)
-    outs = (ComplexBN(axis=-1))(outs)
-    outs = (keras.layers.Activation('relu'))(outs)
-    outs = (keras.layers.AveragePooling1D(pool_size=2, strides=2))(outs)
-
-    outs = (ComplexConv1D(
-        256, 3, strides=1, padding='same',
         activation='relu',
-        kernel_initializer='glorot_normal'))(outs)
+        kernel_initializer='complex_independent'))(outs)
     outs = (ComplexConv1D(
-        256, 3, strides=1, padding='same',
+        128, 3, strides=1, padding='same',
         activation='linear',
-        kernel_initializer='glorot_normal'))(outs)
+        kernel_initializer='complex_independent'))(outs)
     outs = (ComplexBN(axis=-1))(outs)
     outs = (keras.layers.Activation('relu'))(outs)
     outs = (keras.layers.AveragePooling1D(pool_size=2, strides=2))(outs)
