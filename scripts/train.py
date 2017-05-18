@@ -115,7 +115,7 @@ def main(model_name, in_memory, complex_, model, local_data, epochs, fourier,
         raise ValueError
 
     print(".. building model")
-    model = get_model(model, complex_, dataset.feature_dim)
+    model = get_model(model, dataset.feature_dim)
 
     model.summary()
     print(".. parameters: {:03.2f}M".format(model.count_params() / 1000000.))
