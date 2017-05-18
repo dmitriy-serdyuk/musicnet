@@ -11,8 +11,7 @@ import keras
 import musicnet.models.complex
 from musicnet.callbacks import (
     SaveLastModel, Performance, Validation, LearningRateScheduler)
-from musicnet.dataset import (
-    create_test_in_memory, load_in_memory, music_net_iterator)
+from musicnet.dataset import MusicNet
 from musicnet import models
 
 
@@ -53,12 +52,6 @@ def schedule(epoch):
     return lrate
 
 
-def main(model_name, in_memory, complex_conv, model, local_data, epochs):
-    print(".. building model")
-
-    if model == 'mlp':
-        print('.. using MLP')
-        model = get_mlp()
 def get_model(model, complex_):
     if complex_:
         model_module = models.complex
@@ -72,7 +65,7 @@ def get_model(model, complex_):
         print('.. using shallow convnet')
         return model_module.get_shallow_convnet()
     elif model == 'deep_convnet':
-        print('.. using dwwp convnet')
+        print('.. using deep convnet')
         return model_module.get_deep_convnet()
     else:
         raise ValueError
@@ -97,7 +90,9 @@ def get_model(model, complex_):
         return model
 
 
-def main(model_name, in_memory, complex_, model, local_data, epochs, fourier):
+def main(model_name, in_memory, complex_, model, local_data, epochs, fourier,
+         stft):
+    rng = numpy.random.RandomState(123)
     print(".. building model")
     model = get_model(model, complex_)
 
@@ -108,10 +103,12 @@ def main(model_name, in_memory, complex_, model, local_data, epochs, fourier):
     # This can take a few minutes to load
     if in_memory:
         print('.. loading train data')
-        train_data, valid_data, test_data = load_in_memory(local_data)
+        dataset = MusicNet(local_data, complex_=complex_, fourier=fourier,
+                           stft=stft, rng=rng)
+        dataset.load()
         print('.. train data loaded')
-        Xtest, Ytest = create_test_in_memory(test_data)
-        Xvalid, Yvalid = create_test_in_memory(valid_data)
+        Xvalid, Yvalid = dataset.eval_set('valid')
+        Xtest, Ytest = dataset.eval_set('test')
     else:
         raise ValueError
 
@@ -142,50 +139,30 @@ def main(model_name, in_memory, complex_, model, local_data, epochs, fourier):
     logger = mimir.Logger(
         filename='models/log_{}.jsonl.gz'.format(model_name))
 
-    rng = np.random.RandomState(123)
-    if in_memory:
-        it = music_net_iterator(train_data, rng, complex_=complex_, 
-                                fourier=fourier)
-    else:
-        raise ValueError
+    it = dataset.train_iterator()
 
-    Xvalid = Xvalid[:, :, None]
-    Xtest = Xtest[:, :, None]
-    if complex_:
-        if fourier:
-            Xvalid = fft(data)
-            Xtest = fft(data)
-        else:
-            Xvalid = np.concatenate([Xvalid, np.zeros_like(Xvalid)], axis=-1)
-            Xtest = np.concatenate([Xtest, np.zeros_like(Xtest)], axis=-1)
-    else:
-        if fourier:
-            Xvalid = numpy.abs(fft(data))
-            Xtest = numpy.abs(fft(data))
-    callbacks = [Validation(Xvalid, Yvalid, 'valid', logger), 
+    callbacks = [Validation(Xvalid, Yvalid, 'valid', logger),
                  Validation(Xtest, Ytest, 'test', logger),
                  SaveLastModel("./models/", 1, name=model), 
                  Performance(logger),
-                 LearningRateScheduler(schedule)
-                 ]
+                 LearningRateScheduler(schedule)]
 
     print('.. start training')
     model.fit_generator(
         it, steps_per_epoch=1000, epochs=epochs,
-        callbacks=callbacks, workers=1
-        #verbose=2
-        #initial_epoch=10
-       )
+        callbacks=callbacks, workers=1)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('model_name')
     parser.add_argument('--in-memory', action='store_true', default=False)
-    parser.add_argument('--complex', dest='complex_', action='store_true', default=False)
+    parser.add_argument('--complex', dest='complex_', action='store_true',
+                        default=False)
     parser.add_argument('--model', default='resnet')
     parser.add_argument('--epochs', default=200, type=int)
     parser.add_argument('--fourier', action='store_true', default=False)
+    parser.add_argument('--stft', action='store_true', default=False)
     parser.add_argument(
         '--local-data', 
         default="/Tmp/serdyuk/data/musicnet_11khz.npz")

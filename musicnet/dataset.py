@@ -10,68 +10,11 @@ DEFAULT_WINDOW_SIZE = 2048    # fourier window size
 OUTPUT_SIZE = 128               # number of distinct notes
 STRIDE = 512          # samples between windows
 WPS = FS / float(512)   # windows/second
-features = 0
-labels = 1
-
-
-def note_to_class(note):
-    return note - 21
-
-
-def get_splits(all_inds):
-    test_inds = ['2303','2382', '1819']
-    valid_inds = ['2131', '2384', '1792',
-                  '2514', '2567', '1876']
-    train_inds = [ind for ind in all_inds 
-                  if ind not in test_inds and ind not in test_inds]
-    return train_inds, valid_inds, test_inds
-
-
-def load_in_memory(filename):
-    with open(filename, 'rb') as f:
-        train_data = dict(numpy.load(f))
-        all_inds = train_data.keys()
-        train_inds, valid_inds, test_inds = get_splits(all_inds)
-
-        test_data = {}
-        for ind in test_inds: # test set
-            if ind in train_data:
-                test_data[ind] = train_data.pop(ind)
-            
-        valid_data = {}
-        for ind in valid_inds:
-            valid_data[ind] = train_data.pop(ind)
-
-        return train_data, valid_data, test_data
-
-
-def create_test_in_memory(test_data, step=128, fs=11000, window_size=4096,
-                          output_size=84):
-    n_files = len(test_data)
-    pos_per_file = 7500
-    Xtest = numpy.empty([n_files * pos_per_file, window_size])
-    Ytest = numpy.zeros([n_files * pos_per_file, output_size])
-
-    for i, ind in enumerate(test_data):
-        print(ind)
-        audio = test_data[ind][features]
-
-        for j in range(pos_per_file):
-            if j % 1000 == 0:
-                print(j)
-            index = fs + j * step # start from one second to give us some wiggle room for larger segments
-            Xtest[pos_per_file * i + j] = audio[index: index + window_size]
-            
-            # label stuff that's on in the center of the window
-            s = int((index + window_size / 2))
-            for label in test_data[ind][labels][s]:
-                note = label.data[1]
-                Ytest[pos_per_file * i + j, note_to_class(note)] = 1
-    return Xtest, Ytest
 
 
 def create_test(files, music_file, window_size=DEFAULT_WINDOW_SIZE, 
-                output_dim=OUTPUT_SIZE, fs=FS, resample=None, step=512, note_to_class=None):
+                output_dim=OUTPUT_SIZE, fs=FS, resample=None, step=512,
+                note_to_class=None):
     # create the test set
     n_files = len(files)
     max_length = 7500
@@ -101,30 +44,169 @@ def create_test(files, music_file, window_size=DEFAULT_WINDOW_SIZE,
     return Xtest, Ytest
 
 
-def music_net_iterator(train_data, rng, window_size=4096, output_size=84,
-                       complex_=False, fourier=False):
-    channels = 2 if complex_ else 1
-    Xmb = numpy.zeros([len(train_data), window_size, channels])
+class MusicNet(object):
+    def __init__(self, filename, in_memory=True, window_size=4096,
+                 output_size=84, feature_size=1024, sample_freq=11000,
+                 complex_=False, fourier=False, stft=False, rng=None, seed=123):
+        if not in_memory:
+            raise NotImplementedError
+        self.filename = filename
 
-    while True:
-        Ymb = numpy.zeros([len(train_data), output_size])
-        for j, ind in enumerate(train_data):
-            s = rng.randint(window_size / 2, 
-                            len(train_data[ind][features]) - window_size / 2)
-            data = train_data[ind][features][s - window_size / 2:
-                                             s + window_size / 2]
-            if fourier:
-                if complex_:
-                    data = fft(data)
-                    Xmb[j, :, 0] = numpy.real(data)
-                    Xmb[j, :, 1] = numpy.imag(data)
-                else:
-                    data = numpy.abs(fft(data))
-                    Xmb[j, :, 0] = data
+        self.window_size = window_size
+        self.output_size = output_size
+        self.feature_size = feature_size
+        self.sample_freq = sample_freq
+        self.complex_ = complex_
+        self.fourier = fourier
+        self.stft = stft
+
+        if rng is not None:
+            self.rng = rng
+        else:
+            self.rng = numpy.random.RandomState(seed)
+
+        self._train_data = {}
+        self._valid_data = {}
+        self._test_data = {}
+        self._loaded = False
+
+        self._eval_sets = {}
+
+    def get_splits(self):
+        with open(self.filename, 'rb') as f:
+            # This should be fast
+            all_inds = numpy.load(f).keys()
+        test_inds = ['2303', '2382', '1819']
+        valid_inds = ['2131', '2384', '1792',
+                      '2514', '2567', '1876']
+        train_inds = [ind for ind in all_inds
+                      if ind not in test_inds and ind not in test_inds]
+        return train_inds, valid_inds, test_inds
+
+    @classmethod
+    def note_to_class(cls, note):
+        return note - 21
+
+    @property
+    def train_data(self):
+        if self._train_data == {}:
+            self.load()
+        return self._train_data
+
+    @property
+    def valid_data(self):
+        if self._valid_data == {}:
+            self.load()
+        return self._valid_data
+
+    @property
+    def test_data(self):
+        if self._test_data == {}:
+            self.load()
+        return self._test_data
+
+    def load(self, filename=None, reload=False):
+        if filename is None:
+            filename = self.filename
+        if self._loaded and not reload:
+            return
+
+        with open(filename, 'rb') as f:
+            train_data = dict(numpy.load(f))
+            train_inds, valid_inds, test_inds = self.get_splits()
+
+            # test set
+            test_data = {}
+            for ind in test_inds:
+                if ind in train_data:
+                    test_data[ind] = train_data.pop(ind)
+
+            # valid set
+            valid_data = {}
+            for ind in valid_inds:
+                valid_data[ind] = train_data.pop(ind)
+
+            self._train_data = train_data
+            self._valid_data = valid_data
+            self._test_data = test_data
+
+    def construct_eval_set(self, data, step=128):
+        n_files = len(data)
+        pos_per_file = 7500
+        features = numpy.empty([n_files * pos_per_file, self.window_size])
+        outputs = numpy.zeros([n_files * pos_per_file, self.output_size])
+
+        features_ind = 0
+        labels_ind = 1
+
+        for i, ind in enumerate(data):
+            print(ind)
+            audio = data[ind][features_ind]
+
+            for j in range(pos_per_file):
+                if j % 1000 == 0:
+                    print(j)
+                # start from one second to give us some wiggle room for larger
+                # segments
+                index = self.sample_freq + j * step
+                features[pos_per_file * i + j] = audio[index:
+                                                       index + self.window_size]
+
+                # label stuff that's on in the center of the window
+                s = int((index + self.window_size / 2))
+                for label in data[ind][labels_ind][s]:
+                    note = label.data[1]
+                    outputs[pos_per_file * i + j, self.note_to_class(note)] = 1
+        return features, outputs
+
+    def aggregate_raw_batch(self, features, output):
+        """Aggregate batch.
+
+        Parameters:
+        -----------
+        features : 3D float tensor
+            Input tensor
+        output : 2D integer tensor
+            Output classes
+
+        """
+        channels = 2 if self.complex_ else 1
+        features_out = numpy.zeros(
+            [len(self.train_data), self.window_size, channels])
+        if self.fourier:
+            if self.complex_:
+                data = fft(features, axis=1)
+                features_out[:, :, 0] = numpy.real(data[:, :, 0])
+                features_out[:, :, 1] = numpy.imag(data[:, :, 0])
             else:
-                Xmb[j, :, 0] = data
-            for label in train_data[ind][labels][s]:
-                note = label.data[1]
-                Ymb[j, note_to_class(note)] = 1
-        yield Xmb, Ymb
+                data = numpy.abs(fft(features, axis=1))
+                features_out[:, :, 0] = data
+        else:
+            features_out[:, :, 0] = features
+        return features, output
 
+    def train_iterator(self):
+        features = numpy.zeros([len(self.train_data), self.window_size])
+
+        while True:
+            output = numpy.zeros([len(self.train_data), self.output_size])
+            for j, ind in enumerate(self.train_data):
+                s = self.rng.randint(
+                    self.window_size / 2,
+                    len(self.train_data[ind][0]) - self.window_size / 2)
+                data = self.train_data[ind][0][s - self.window_size / 2:
+                                               s + self.window_size / 2]
+                features[j, :] = data
+                for label in self.train_data[ind][1][s]:
+                    note = label.data[1]
+                    output[j, self.note_to_class(note)] = 1
+            yield self.aggregate_raw_batch(features[:, :, None], output)
+
+    def eval_set(self, set_name):
+        if not self._eval_sets:
+            for name in ['valid', 'test']:
+                data = self.valid_data if name == 'valid' else self.test_data
+                x, y = self.construct_eval_set(data)
+                x, y = self.aggregate_raw_batch(x[:, :, None], y)
+                self._eval_sets[name] = (x, y)
+        return self._eval_sets[set_name]
