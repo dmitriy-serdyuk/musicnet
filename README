@@ -1,7 +1,0 @@
-Scripts and tools for MusicNet classification
-
-Install:
-
-```
-source ./env.sh
-```
