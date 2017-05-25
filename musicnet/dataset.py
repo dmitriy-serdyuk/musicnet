@@ -19,38 +19,6 @@ STRIDE = 512          # samples between windows
 WPS = FS / float(512)   # windows/second
 
 
-def create_test(files, music_file, window_size=DEFAULT_WINDOW_SIZE, 
-                output_dim=OUTPUT_SIZE, fs=FS, resample=None, step=512,
-                note_to_class=None):
-    # create the test set
-    n_files = len(files)
-    max_length = 7500
-    Xtest = numpy.empty([n_files * max_length, window_size])
-    Ytest = numpy.zeros([n_files * max_length, output_dim])
-
-    for i, ind in enumerate(files):
-        print('.. aggregating', ind)
-        Ycur = IntervalTree(
-            [Interval(start_time, end_time, note_id) 
-             for _, end_time, _, _, note_id, _, start_time 
-             in music_file[ind]['labels'][:]])
-        dt = music_file[ind]['data'][:]
-        if resample:
-            dt = resampy.resample(dt, fs, resample)
-        for j in range(7500):
-            if j % 1000 == 0:
-                print('.. segment', j)
-            # start from one second to give us some wiggle room for larger
-            # segments
-            s = fs + j * step
-            Xtest[7500 * i + j] = dt[s: s + window_size]
-            
-            # label stuff that's on in the center of the window
-            for label in Ycur[s + window_size / 2]:
-                Ytest[7500 * i + j, note_to_class(label.data)] = 1
-    return Xtest, Ytest
-
-
 class MusicNet(object):
     def __init__(self, filename, in_memory=True, window_size=4096,
                  output_size=84, feature_size=1024, sample_freq=11000,
