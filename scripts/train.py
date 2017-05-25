@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+#
+# Authors: Dmitriy Serdyuk
+
 from __future__ import print_function
 import numpy
 import numpy as np

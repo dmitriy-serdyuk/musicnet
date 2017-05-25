@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+#
+# Authors: Dmitriy Serdyuk, Olexa Bilaniuk, Chiheb Trabelsi, Sandeep Subramanian
+
 import keras.backend as K
 import keras
 from keras.layers import Lambda, add, concatenate, Reshape, Concatenate

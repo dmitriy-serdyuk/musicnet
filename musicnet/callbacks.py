@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+#
+# Authors: Dmitriy Serdyuk
+
 import os
 import numpy as np
 import h5py

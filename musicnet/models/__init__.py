@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+#
+# Authors: Dmitriy Serdyuk, Olexa Bilaniuk, Chiheb Trabelsi, Sandeep Subramanian
+
 import keras
 from keras.models import Model
 from keras.layers import (
