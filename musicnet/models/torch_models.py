@@ -63,7 +63,7 @@ class DeepConvnet(nn.Module):
             nn.MaxPool1d(2, stride=2)
         ])
 
-        self.conv_sequential = nn.Sequential(self.conv_layers)
+        self.conv_sequential = nn.Sequential(*self.conv_layers)
 
         conv_shape = self._conv_shape((channels, window_size))
         self.linears = [nn.Linear(numpy.prod(conv_shape), 2048)]
@@ -71,7 +71,7 @@ class DeepConvnet(nn.Module):
         self.linears.append(nn.Linear(2048, output_size))
         self.flat_layers.extend([self.linears[-1], nn.Sigmoid()])
 
-        self.flat_sequential = nn.Sequential(self.flat_layers)
+        self.flat_sequential = nn.Sequential(*self.flat_layers)
 
         super(DeepConvnet, self).__init__()
 
