@@ -115,7 +115,7 @@ def train_model(iterator, model, steps_per_epoch, epochs, cuda=False,
         input_, target = data
 
         input_ = Variable(torch.from_numpy(numpy.cast['float32'](input_.transpose((0, 2, 1)))))
-        target = Variable(torch.from_numpy(target))
+        target = Variable(torch.from_numpy(numpy.cast['int64'](target)))
         if cuda:
             input_ = input_.cuda()
             target = target.cuda()
