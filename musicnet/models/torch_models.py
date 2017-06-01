@@ -69,7 +69,7 @@ class DeepConvnet(nn.Module):
         conv_shape = self._conv_shape((channels, window_size))
         self.linears = [nn.Linear(numpy.prod(conv_shape), 2048)]
         self.flat_layers = []
-        self.flat_layers.extend([self.linears[-1], nn.ReLU])
+        self.flat_layers.extend([self.linears[-1], nn.ReLU()])
         self.linears.append(nn.Linear(2048, output_size))
         self.flat_layers.extend([self.linears[-1], nn.Sigmoid()])
 
