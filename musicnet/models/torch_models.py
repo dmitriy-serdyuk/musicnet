@@ -109,7 +109,8 @@ class DeepConvnet(nn.Module):
 
 
 def validate(model, input_, output, logger, iteration, name):
-    pred = model(input_)
+    pred = model(Variable(torch.from_numpy(input_)).cuda())
+    pred = pred.data.numpy()
     average_precision = average_precision_score(
         output.flatten(), pred.flatten())
     loss = log_loss(output.flatten(), pred.flatten())
@@ -125,7 +126,15 @@ def train_model(dataset, model, steps_per_epoch, epochs, cuda=False,
     # in your training loop:
     iterator = dataset.train_iterator()
     Xvalid, Yvalid = dataset.eval_set('valid')
+    Xvalid = Xvalid.transpose((0, 2, 1))
+    Xvalid = numpy.cast['float32'](Xvalid)
+    Yvalid = numpy.cast['float32'](Yvalid)
+
     Xtest, Ytest = dataset.eval_set('test')
+    Xtest = Xtest.transpose((0, 2, 1))
+    Xtest = numpy.cast['float32'](Xtest)
+    Ytest = numpy.cast['float32'](Ytest)
+
     for i, data in enumerate(iterator):
         input_, target = data
 
