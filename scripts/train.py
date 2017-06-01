@@ -110,7 +110,7 @@ def main(model_name, in_memory, complex_, model, local_data, epochs, fourier,
     model.cuda()
     with mimir.Logger(
             filename='models/log_{}.jsonl.gz'.format(model_name)) as logger:
-        train_model(it, model, steps_per_epoch=1000, epochs=epochs, cuda=True,
+        train_model(dataset, model, steps_per_epoch=1000, epochs=epochs, cuda=True,
                     logger=logger)
 
 
