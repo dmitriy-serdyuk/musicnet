@@ -6,18 +6,15 @@
 
 from __future__ import print_function
 import numpy
-import numpy as np
-from os import path
 import argparse
 import mimir
-
-import keras
 
 import musicnet.models.complex
 from musicnet.callbacks import (
     SaveLastModel, Performance, Validation, LearningRateScheduler)
 from musicnet.dataset import MusicNet
 from musicnet import models
+from musicnet.models.torch_models import DeepConvnet, train_model
 
 
 # input dimensions
@@ -73,8 +70,8 @@ def get_model(model, feature_dim):
                                                 channels=feature_dim[1])
     elif model == 'deep_convnet':
         print('.. using deep convnet')
-        return model_module.get_deep_convnet(window_size=feature_dim[0],
-                                             channels=feature_dim[1])
+        return DeepConvnet(window_size=feature_dim[0],
+                           channels=feature_dim[1])
     else:
         raise ValueError
 
@@ -108,21 +105,14 @@ def main(model_name, in_memory, complex_, model, local_data, epochs, fourier,
     else:
         raise ValueError
 
-    logger = mimir.Logger(
-        filename='models/log_{}.jsonl.gz'.format(model_name))
 
     it = dataset.train_iterator()
 
-    callbacks = [Validation(Xvalid, Yvalid, 'valid', logger),
-                 Validation(Xtest, Ytest, 'test', logger),
-                 SaveLastModel("./models/", 1, name=model), 
-                 Performance(logger),
-                 LearningRateScheduler(schedule)]
-
     print('.. start training')
-    model.fit_generator(
-        it, steps_per_epoch=1000, epochs=epochs,
-        callbacks=callbacks, workers=1)
+    with mimir.Logger(
+            filename='models/log_{}.jsonl.gz'.format(model_name)) as logger:
+        train_model(it, model, steps_per_epoch=1000, epochs=epochs, cuda=True,
+                    logger=logger)
 
 
 if __name__ == "__main__":
