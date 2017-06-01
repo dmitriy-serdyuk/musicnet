@@ -115,7 +115,7 @@ def train_model(iterator, model, steps_per_epoch, epochs, cuda=False,
         input_, target = data
 
         input_ = Variable(torch.from_numpy(input_))
-        target = Variable(torch.from_numpy(data))
+        target = Variable(torch.from_numpy(target))
         if cuda:
             input_ = input_.cuda()
             target = target.cuda()
