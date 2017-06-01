@@ -100,7 +100,7 @@ class DeepConvnet(nn.Module):
 
     def forward(self, input_):
         conv_out = self._forward_conv(input_)
-        return self.flat_sequential(conv_out.view(conv_out.size(1), -1))
+        return self.flat_sequential(conv_out.view(conv_out.size(0), -1))
 
     def cost(self, pred, target):
         return binary_cross_entropy(pred, target)
