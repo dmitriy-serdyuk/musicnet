@@ -7,6 +7,8 @@ from torch.nn.init import xavier_normal, constant
 from torch.nn.functional import binary_cross_entropy
 from torch.optim import Adam
 
+from sklearn.metrics import average_precision_score, log_loss
+
 
 class DeepConvnet(nn.Module):
     def __init__(self, window_size=4096, channels=1, output_size=84):
@@ -106,11 +108,24 @@ class DeepConvnet(nn.Module):
         return binary_cross_entropy(pred, target)
 
 
-def train_model(iterator, model, steps_per_epoch, epochs, cuda=False,
+def validate(model, input_, output, logger, iteration, name):
+    pred = model(input_)
+    average_precision = average_precision_score(
+        output.flatten(), pred.flatten())
+    loss = log_loss(output.flatten(), pred.flatten())
+
+    logger.log({'iteration': iteration, name: {'loss': loss,
+                                               'ap': average_precision}})
+
+
+def train_model(dataset, model, steps_per_epoch, epochs, cuda=False,
                 logger=None):
     optimizer = Adam(model.parameters(), lr=1.e-3)
 
     # in your training loop:
+    iterator = dataset.train_iterator()
+    Xvalid, Yvalid = dataset.eval_set('valid')
+    Xtest, Ytest = dataset.eval_set('test')
     for i, data in enumerate(iterator):
         input_, target = data
 
@@ -126,10 +141,11 @@ def train_model(iterator, model, steps_per_epoch, epochs, cuda=False,
         loss.backward()
         optimizer.step()
         if i % 100 == 0:
-            logger.log({'iteration': i, 'loss': loss.data[0]})
+            logger.log({'iteration': i, 'train': {'loss': loss.data[0]}})
 
         if i % steps_per_epoch == 0:
-            pass
+            validate(model, Xvalid, Yvalid, logger, i, 'valid')
+            validate(model, Xtest, Ytest, logger, i, 'test')
 
         if i >= steps_per_epoch * epochs:
             print('.. training finished')
