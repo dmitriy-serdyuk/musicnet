@@ -10,6 +10,7 @@ from torch.optim import Adam
 
 class DeepConvnet(nn.Module):
     def __init__(self, window_size=4096, channels=1, output_size=84):
+        super(DeepConvnet, self).__init__()
         self.conv_layers = []
         self.convs = []
 
@@ -72,8 +73,6 @@ class DeepConvnet(nn.Module):
         self.flat_layers.extend([self.linears[-1], nn.Sigmoid()])
 
         self.flat_sequential = nn.Sequential(*self.flat_layers)
-
-        super(DeepConvnet, self).__init__()
 
         self.init()
 
