@@ -77,6 +77,9 @@ class DeepConvnet(nn.Module):
 
         self.init()
 
+    def summary(self):
+        print("no summary yet")
+
     def init(self):
         for conv in self.convs:
             xavier_normal(conv.weight.data)
