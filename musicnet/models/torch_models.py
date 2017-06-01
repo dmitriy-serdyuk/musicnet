@@ -86,9 +86,6 @@ class DeepConvnet(nn.Module):
             xavier_normal(layer.weight.data)
             constant(layer.bias.data, 0)
 
-        xavier_normal(self.flat_layers[2].weight.data)
-        constant(self.flat_layers[3].bias.data, 0)
-
     def _forward_conv(self, input_):
         return self.conv_sequential(input_)
 
