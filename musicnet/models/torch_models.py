@@ -125,6 +125,11 @@ def train_model(iterator, model, steps_per_epoch, epochs, cuda=False,
         loss = model.cost(output, target)
         loss.backward()
         optimizer.step()
+        if i % 100 == 0:
+            logger.log({'iteration': i, 'loss': loss.data[0]})
+
+        if i % steps_per_epoch == 0:
+            pass
 
         if i >= steps_per_epoch * epochs:
             print('.. training finished')
