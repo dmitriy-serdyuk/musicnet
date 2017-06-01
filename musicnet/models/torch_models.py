@@ -127,13 +127,13 @@ def train_model(dataset, model, steps_per_epoch, epochs, cuda=False,
     iterator = dataset.train_iterator()
     Xvalid, Yvalid = dataset.eval_set('valid')
     Xvalid = Xvalid.transpose((0, 2, 1))
-    Xvalid = numpy.cast['float32'](Xvalid)
-    Yvalid = numpy.cast['float32'](Yvalid)
+    Xvalid = numpy.ascontiguousarray(numpy.cast['float32'](Xvalid))
+    Yvalid = numpy.ascontiguousarray(numpy.cast['float32'](Yvalid))
 
     Xtest, Ytest = dataset.eval_set('test')
     Xtest = Xtest.transpose((0, 2, 1))
-    Xtest = numpy.cast['float32'](Xtest)
-    Ytest = numpy.cast['float32'](Ytest)
+    Xtest = numpy.ascontiguousarray(numpy.cast['float32'](Xtest))
+    Ytest = numpy.ascontiguousarray(numpy.cast['float32'](Ytest))
 
     for i, data in enumerate(iterator):
         input_, target = data
