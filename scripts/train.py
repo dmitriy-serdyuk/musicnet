@@ -9,7 +9,6 @@ import numpy
 import argparse
 import mimir
 
-import musicnet.models.complex
 from musicnet.callbacks import (
     SaveLastModel, Performance, Validation, LearningRateScheduler)
 from musicnet.dataset import MusicNet
@@ -60,6 +59,7 @@ def get_model(model, feature_dim):
         print('.. complex network')
     else:
         #model_module = models
+        pass
     if model == 'mlp':
         print('.. using MLP')
         return model_module.get_mlp(window_size=numpy.prod(feature_dim))
