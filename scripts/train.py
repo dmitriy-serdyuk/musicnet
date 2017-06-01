@@ -13,7 +13,6 @@ import musicnet.models.complex
 from musicnet.callbacks import (
     SaveLastModel, Performance, Validation, LearningRateScheduler)
 from musicnet.dataset import MusicNet
-from musicnet import models
 from musicnet.models.torch_models import DeepConvnet, train_model
 
 
@@ -57,10 +56,10 @@ def get_model(model, feature_dim):
     else:
         complex_ = False
     if complex_:
-        model_module = models.complex
+        #model_module = models.complex
         print('.. complex network')
     else:
-        model_module = models
+        #model_module = models
     if model == 'mlp':
         print('.. using MLP')
         return model_module.get_mlp(window_size=numpy.prod(feature_dim))
