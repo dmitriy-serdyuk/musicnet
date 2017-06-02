@@ -109,8 +109,15 @@ class DeepConvnet(nn.Module):
 
 
 def validate(model, input_, output, logger, iteration, name):
-    pred = model(Variable(torch.from_numpy(input_)).cuda())
-    pred = pred.data.numpy()
+    preds = []
+    input_size = input_.shape[0]
+    N = 10
+    input_chunk_size = input_size / N
+    for i in range(N):
+        inp = input_[(i * input_chunk_size): ((i + 1) * input_chunk_size)]
+        pred = model(Variable(torch.from_numpy(inp)).cuda())
+        preds.append(pred.data.numpy())
+    pred = numpy.concatenate(preds, axis=0)
     average_precision = average_precision_score(
         output.flatten(), pred.flatten())
     loss = log_loss(output.flatten(), pred.flatten())
