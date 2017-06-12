@@ -1,0 +1,44 @@
+#!/usr/bin/env python
+from __future__ import print_function
+import argparse
+import mimir
+import numpy
+import time
+
+from musicnet.dataset import MusicNet
+
+
+def main(in_memory, complex_, local_data, fourier, stft, fast_load):
+    rng = numpy.random.RandomState(123)
+    print('.. loading train data')
+    dataset = MusicNet(
+        local_data, complex_=complex_, fourier=fourier, stft=stft, rng=rng, 
+        fast_load=fast_load, in_memory=in_memory)
+    dataset.load()
+    print('.. train data loaded')
+    Xvalid, Yvalid = dataset.eval_set('valid')
+    Xtest, Ytest = dataset.eval_set('test')
+
+    start_time = time.time()
+    for i, data in enumerate(dataset.train_iterator()):
+        print(".. iteration", i)
+        if i == 1000:
+            break
+    end_time = time.time()
+    print("-- epoch took", end_time - start_time)
+    print("-- time per iteration", (end_time - start_time) / i)
+
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--in-memory', action='store_true', default=False)
+    parser.add_argument('--complex', dest='complex_', action='store_true',
+                        default=False)
+    parser.add_argument('--fourier', action='store_true', default=False)
+    parser.add_argument('--stft', action='store_true', default=False)
+    parser.add_argument('--fast-load', action='store_true', default=False)
+    parser.add_argument(
+        '--local-data', 
+        default="/Tmp/serdyuk/data/musicnet_11khz.npz")
+    main(**parser.parse_args().__dict__)

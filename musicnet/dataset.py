@@ -12,13 +12,6 @@ from scipy import fft
 from scipy.signal import stft
 
 
-FS = 44100            # samples/second
-DEFAULT_WINDOW_SIZE = 2048    # fourier window size
-OUTPUT_SIZE = 128               # number of distinct notes
-STRIDE = 512          # samples between windows
-WPS = FS / float(512)   # windows/second
-
-
 class MusicNet(object):
     def __init__(self, filename, in_memory=True, window_size=4096,
                  output_size=84, feature_size=1024, sample_freq=11000,
