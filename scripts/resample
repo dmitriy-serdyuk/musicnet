@@ -1,0 +1,115 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+#
+# Authors: Dmitriy Serdyuk
+from __future__ import print_function
+import numpy
+import argparse
+try:
+    import h5py
+except ImportError:
+    h5py = None
+
+from collections import OrderedDict
+from intervaltree import Interval, IntervalTree
+from resampy import resample
+
+
+def resample_npz(file_in, file_out, frame_rate, frame_rate_out, ratio):
+    resampled_data = {}
+    with open(file_in, 'rb') as f_in:
+        data_in = numpy.load(file_in)
+        n_files = len(data_in.keys())
+        for i, key in enumerate(data_in):
+            print('.. aggregating {} ({} / {})'.format(key, i, n_files))
+            data = data_in[key]
+            data[0] = resample(data[0], frame_rate, frame_rate_out)
+            resampled_intervals = []
+            for interval in data[1]:
+                resampled_begin = int(interval.begin * ratio)
+                resampled_end = int(interval.end * ratio)
+                resampled_interval = Interval(
+                    resampled_begin, resampled_end, interval.data)
+                resampled_intervals.append(resampled_interval)
+            data[1] = IntervalTree(resampled_intervals)
+            resampled_data[key] = data
+
+        print('.. saving output')
+        with open(file_out, 'wb') as f_out:
+            numpy.savez(f_out, **resampled_data)
+
+
+def resample_hdf5(file_in, file_out, frame_rate, frame_rate_out, ratio):
+    if h5py is None:
+        raise ImportError
+
+    label_dtypes = OrderedDict(
+        [('beat', 'float32'), ('end_time', 'uint32'), 
+         ('instrument_id', 'uint8'), ('measure', 'uint32'), 
+         ('note_id', 'uint8'), ('note_value', 'S32'), 
+         ('start_time', 'uint32')])
+
+    with h5py.File(file_in, 'r') as data_in, \
+         h5py.File(file_out, 'w') as data_out:
+
+        n_files = len(data_in.keys())
+
+        index_set = data_out.create_dataset(
+            'index', (n_files,), dtype='uint')
+
+        feature_dtype = h5py.special_dtype(vlen=numpy.dtype('float64'))
+        feature_set = data_out.create_dataset(
+            'feature', (n_files,), dtype=feature_dtype)
+
+        label_sets = OrderedDict(
+            (name, data_out.create_dataset(
+                name, (n_files,), 
+                dtype=h5py.special_dtype(vlen=numpy.dtype(dtype))))
+            for name, dtype in label_dtypes.items())
+
+        for i, key in enumerate(data_in):
+            print('.. aggregating {} ({} / {})'.format(key, i, n_files))
+            data = data_in[key]
+            int_key = int(key[3:])
+
+            index_set[i] = int_key
+
+            resampled_data = resample(
+                data['data'][:], frame_rate, frame_rate_out)
+            feature_set[i] = resampled_data
+
+            label_length = len(data['labels'])
+            resampled_intervals = []
+            for name, dataset in label_sets.items():
+                dataset[i] = numpy.empty(
+                    (label_length,), dtype=label_dtypes[name])
+            for j, interval in enumerate(data['labels']):
+                interval = OrderedDict(zip(label_dtypes.keys(), interval))
+                interval['start_time'] = int(interval['start_time'] * ratio)
+                interval['end_time'] = int(interval['end_time'] * ratio)
+                for name, value in interval.items():
+                    label_sets[name][i][j] = value
+
+
+def resample_musicnet(file_in, file_out, frame_rate, frame_rate_out, format_):
+    print('.. resampling {} ({}Hz) into {} ({}Hz)'.format(
+        file_in, frame_rate, file_out, frame_rate_out))
+    ratio = frame_rate_out / float(frame_rate)
+    print('.. sampling with ratio {}'.format(ratio))
+
+    rasample_funcs = {'npz': resample_npz, 'hdf5': resample_hdf5}
+    rasample_funcs[format_](
+        file_in, file_out, frame_rate, frame_rate_out, ratio)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('file_in')
+    parser.add_argument('file_out')
+    parser.add_argument('frame_rate', type=int)
+    parser.add_argument('frame_rate_out', type=int)
+    parser.add_argument('--format', dest="format_", choices=["hdf5", "npz"], 
+                        default='npz')
+
+    resample_musicnet(**parser.parse_args().__dict__)
