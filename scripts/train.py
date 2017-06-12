@@ -9,10 +9,13 @@ import numpy
 import argparse
 import mimir
 
+from contextlib import closing
+
 from musicnet.callbacks import (
     SaveLastModel, Performance, Validation, LearningRateScheduler)
 from musicnet.dataset import MusicNet
 from musicnet.models.torch_models import DeepConvnet, train_model
+from musicnet.visdom_handler import VisdomHandler
 
 
 # input dimensions
@@ -108,10 +111,23 @@ def main(model_name, in_memory, complex_, model, local_data, epochs, fourier,
 
     print('.. start training')
     model.cuda()
-    with mimir.Logger(
-            filename='models/log_{}.jsonl.gz'.format(model_name)) as logger:
-        train_model(dataset, model, steps_per_epoch=1000, epochs=epochs, cuda=True,
-                    logger=logger)
+
+    logger = mimir.Logger(
+            filename='models/log_{}.jsonl.gz'.format(model_name))
+    loss_handler = VisdomHandler(
+        ['train', 'valid'], 'loss',
+        dict(title='Train/valid cross-entropy',
+             xlabel='iteration',
+             ylabel='cross-entropy'), port=5004)
+    ap_handler = VisdomHandler(
+        ['valid'], 'ap',
+        dict(title='Train/valid average precision',
+             xlabel='iteration',
+             ylabel='average precision'), port=5004)
+    logger.handlers.extend([loss_handler, ap_handler])
+    with closing(logger):
+        train_model(dataset, model, steps_per_epoch=1000, epochs=epochs, 
+                    cuda=True, logger=logger, lr_schedule=schedule)
 
 
 if __name__ == "__main__":
